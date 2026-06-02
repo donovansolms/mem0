@@ -14,15 +14,18 @@ services:
     volumes:
       - ./history:/app/history
       - .:/app
+      # Mount the fork's local mem0/ (repo root) so dev runs OUR mem0, not PyPI.
+      # PYTHONPATH=/app (below) makes it win on import; --reload picks up edits.
+      - ../mem0:/app/mem0
     depends_on:
       postgres:
         condition: service_healthy
     command: >
-      sh -c "rm -rf /app/packages && pip install -q --force-reinstall --no-deps mem0ai && alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
+      sh -c "alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
     environment:
       - PYTHONDONTWRITEBYTECODE=1
       - PYTHONUNBUFFERED=1
-      - PYTHONPATH=
+      - PYTHONPATH=/app
       - DASHBOARD_URL=http://localhost:3000
       - APP_DB_NAME=mem0_app
       - JWT_SECRET=${JWT_SECRET}
