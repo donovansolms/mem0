@@ -60,7 +60,8 @@ services:
       - postgres_db:/var/lib/postgresql/data
       - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
     ports:
-      - "8432:5432"
+      # 8433 (not 8432) to avoid colliding with Butler's TimescaleDB on 8432.
+      - "8433:5432"
 
 volumes:
   postgres_db:
