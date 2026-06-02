@@ -322,12 +322,17 @@ class PGVector(VectorStoreBase):
         filter_clause = sql.SQL("WHERE " + " AND ".join(filter_conditions)) if filter_conditions else sql.SQL("")
 
         with self._get_cursor() as cur:
+            # `<=>` is cosine DISTANCE (lower = nearer). Return cosine SIMILARITY
+            # (1 - distance, higher = better) instead: every downstream consumer in
+            # mem0 — score_and_rank, the search threshold, the add-path dedup
+            # (>= 0.95), and the entity boost (< 0.5) — assumes `score` is a
+            # similarity. Returning raw distance inverts ranking and truncation.
             cur.execute(
                 sql.SQL("""
-                SELECT id, vector <=> %s::vector AS distance, payload
+                SELECT id, 1 - (vector <=> %s::vector) AS similarity, payload
                 FROM {}
                 {}
-                ORDER BY distance
+                ORDER BY similarity DESC
                 LIMIT %s
                 """).format(self._col(), filter_clause),
                 (vectors, *filter_params, top_k),
