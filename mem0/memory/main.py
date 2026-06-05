@@ -700,7 +700,15 @@ class Memory(MemoryBase):
 
         # Phase 0: Context gathering
         session_scope = _build_session_scope(filters)
-        last_messages = self.db.get_last_messages(session_scope, limit=10)
+        # Butler ingests each event as an independent, self-contained message
+        # (framed with sender + perspective) under one per-person session, so the
+        # "last k session messages" is not a coherent conversation — it's an
+        # out-of-order jumble of unrelated events. The extractor, despite the
+        # prompt's "context only, do not extract" rule, mints facts from that
+        # history and stamps them with THIS request's metadata (mis-dating their
+        # occurs_start/provenance). Don't feed it: extract solely from the new
+        # message.
+        last_messages = []
         parsed_messages = parse_messages(messages)
 
         # Phase 1: Existing memory retrieval
@@ -2115,7 +2123,10 @@ class AsyncMemory(MemoryBase):
 
         # Phase 0: Context gathering
         session_scope = _build_session_scope(effective_filters)
-        last_messages = await asyncio.to_thread(self.db.get_last_messages, session_scope, 10)
+        # See the sync path: don't feed the jumbled cross-event session history to
+        # the extractor — it mints + mis-stamps facts from it. Extract solely from
+        # the new message.
+        last_messages = []
         parsed_messages = parse_messages(messages)
 
         # Phase 1: Existing memory retrieval
