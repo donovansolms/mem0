@@ -8,6 +8,7 @@ from mem0.configs.llms.base import BaseLlmConfig
 from mem0.configs.llms.deepseek import DeepSeekConfig
 from mem0.llms.base import LLMBase
 from mem0.memory.utils import extract_json
+from mem0.utils.http_client import create_resilient_http_client
 
 
 class DeepSeekLLM(LLMBase):
@@ -38,7 +39,7 @@ class DeepSeekLLM(LLMBase):
 
         api_key = self.config.api_key or os.getenv("DEEPSEEK_API_KEY")
         base_url = self.config.deepseek_base_url or os.getenv("DEEPSEEK_API_BASE") or "https://api.deepseek.com"
-        self.client = OpenAI(api_key=api_key, base_url=base_url)
+        self.client = OpenAI(api_key=api_key, base_url=base_url, http_client=create_resilient_http_client())
 
     def _parse_response(self, response, tools):
         """

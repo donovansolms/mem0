@@ -5,6 +5,7 @@ from openai import OpenAI
 
 from mem0.configs.llms.base import BaseLlmConfig
 from mem0.llms.base import LLMBase
+from mem0.utils.http_client import create_resilient_http_client
 
 
 class XAILLM(LLMBase):
@@ -16,7 +17,7 @@ class XAILLM(LLMBase):
 
         api_key = self.config.api_key or os.getenv("XAI_API_KEY")
         base_url = self.config.xai_base_url or os.getenv("XAI_API_BASE") or "https://api.x.ai/v1"
-        self.client = OpenAI(api_key=api_key, base_url=base_url)
+        self.client = OpenAI(api_key=api_key, base_url=base_url, http_client=create_resilient_http_client())
 
     def generate_response(
         self,

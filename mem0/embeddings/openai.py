@@ -6,6 +6,7 @@ from openai import OpenAI
 
 from mem0.configs.embeddings.base import BaseEmbedderConfig
 from mem0.embeddings.base import EmbeddingBase
+from mem0.utils.http_client import create_resilient_http_client
 
 
 class OpenAIEmbedding(EmbeddingBase):
@@ -32,7 +33,7 @@ class OpenAIEmbedding(EmbeddingBase):
                 DeprecationWarning,
             )
 
-        self.client = OpenAI(api_key=api_key, base_url=base_url)
+        self.client = OpenAI(api_key=api_key, base_url=base_url, http_client=create_resilient_http_client())
 
     def embed(self, text, memory_action: Optional[Literal["add", "search", "update"]] = None):
         """
